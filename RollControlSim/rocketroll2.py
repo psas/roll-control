@@ -40,7 +40,7 @@ R=8.31447 #ideal universal gas constant J/(mol*K)
 po = 101.325#*(10**3) #sea level standard atmospheric pressure (Pa)
 
 #Constants for coefficient of lift
-Kp=2.45
+Kp=2.45     #this is the kp
 Kv=3.21
 #This is the coefficient of lift in subsonic speeds
 Cl = (Kp*(math.cos(alpha)**2)*math.sin(alpha))+(Kv*math.cos(alpha)*(math.sin(alpha)**2))
