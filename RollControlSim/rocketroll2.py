@@ -8,45 +8,93 @@ import numpy as np #for getting data from csv
 import finforce #for calculations for coefficient of lift & lift
 import matplotlib #for plotting stuff
 import matplotlib.pylab as plt
-import math #for our friend pi
-import scipy.integrate as integrate
+import scipy.integrate as integrate #for integration
+import PIDcontroller as controller #PID controller
+import random #for random numbers
+import os.path #for saving information
 
 #for storing data
 track_thetadotdot = []
 track_thetadot = []
 track_lift = []
+track_alpha = []
+track_target = []
 
 index=0 #index for while loop
 
+withPID=input('Use PID controller to control roll? (1 for Yes, 0 for no): ')
+if(withPID==1):
+    getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
+    alpha=input('Enter initial canard angle (must be >0): ') #initial canard angle
+    #alpha=math.radians(alpha) #convert to radians
+    #manually enter values for PID controller
+    if(getMode==1):
+        setPoint = input('Target roll rate: ') #set target roll rate
+        setKp = input('Proportional gain for PID controller: ') #set Kp 
+        setKi = input('Integral gain for PID controller: ') #set Ki
+        #randomly generate values for PID controller based on given intervals
+    else:
+        print 'Enter the following inputs as two element arrays'
+        print 'And make sure that the first element is less than the second'
+        print 'Ex: [0,1]'
+        getSetPointInterval=input('Set Point Interval: ')
+        getKpInterval=input('Kp Interval: ')
+        getKiInterval=input('Ki Interval: ')
+        setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
+        setKp=random.uniform(getKpInterval[0],getKpInterval[1])
+        setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+    #set up PID controller
+    p=controller.PID(setKp,setKi,0)
+    p.setPoint(setPoint)
+else:
+    alpha=input('Enter canard angle in degrees: ') #get canard angle
+    #alpha=math.radians(alpha) #convert to radians
+
 #load flight data from csv
-data=np.genfromtxt('flight_data.csv',dtype=float,delimiter=',',names="t,altitude,velocity,acc")
+data=np.genfromtxt('flight_data0.csv',dtype=float,delimiter=',',names="t,altitude,velocity,acc,I")
 t=data['t'] #time
 tos=len(t) #time of simulation
 altitude=data['altitude'] #altitude
 v=data['velocity'] #velocity
 acc=data['acc'] #acceleration
-alpha=1 #angle of canards
-alpha = math.radians(alpha) #convert to radians
+I=data['I'] #Rotational moment of inertia
 g=9.81 #gravitational constant
-Cl = finforce.C_L(acc[index],v[index]) #initialize coefficient of lift
-L=finforce.lift(acc[index],v[index],altitude[index]) #initialize lift force of the canards
+L=finforce.lift(alpha,v[index],altitude[index]) #initialize lift force of the canards
 thetadotdot=0 #initial angular acceleration
-while(index<tos):
-    track_lift.append(round(L,3)) #store lift force of canards
-    track_thetadotdot.append(round(thetadotdot,3)) #store angular acceleration
+
+#start simulation
+while(index<tos):   
+    track_alpha.append(alpha) #store alpha
+    track_lift.append(L) #store lift force of canards
+    track_thetadotdot.append(thetadotdot) #store angular acceleration
+    
+    #prevent integration error    
     if(index==0):
-        track_thetadot.append(0)
+        track_thetadot.append(0) #first value should be 0 anyway
+        thetadot=0
+    #otherwise we integrate thetadotdot to get roll rate
     else:
-        track_thetadot.append(round(integrate.simps(track_thetadotdot[:index],t[:index]),3))
-    Cl = finforce.C_L(acc[index],v[index]) #coefficient of lift update
-    L=finforce.lift(acc[index],v[index],altitude[index]) #lift force update
-    thetadotdot=float(4*L*.082)/float(.08594) #angular acceleration update
-    print 'Time = {:3.2f} seconds'.format(t[index]) #show the time
-    print 'Velocity is {:3.2f} m/s '.format(v[index]) #show the velocity
-    print 'Altitude is {:3.2f} m'.format(altitude[index]) #show the altitude
-    print 'Lift force {:3.2f} N'.format(L) #show the lift force
-    print 'Angular acc {:3.2f} rad/s^2'.format(thetadotdot) #show the angular acc
-    index=index+1
+        thetadot=integrate.simps(track_thetadotdot[:index],t[:index]) #roll rate update
+        track_thetadot.append(thetadot) #store roll rate
+        
+    #if PID controller is enabled
+    if(withPID==1 and acc[index]>0):
+        alpha=p.update(thetadot) #PID controller update
+        #alpha=math.radians(alpha) #convert to radians
+    
+    L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
+    thetadotdot=float((4*L*.082)/I[index]) #angular acceleration update
+    
+    print 'Time = {:f} seconds'.format(t[index]) #show the time
+    print 'Velocity is {:f} m/s '.format(v[index]) #show the velocity
+    print 'Acceleration is {:f} m/s^2'.format(acc[index]) #show the acceleration
+    print 'Altitude is {:f} m'.format(altitude[index]) #show the altitude
+    print 'Canard angle(s) {:f} radians'.format(alpha) #show canard angles
+    print 'Lift force {:f} N'.format(L) #show the lift force
+    print 'Angular acc {:f} rad/s^2'.format(thetadotdot) #show the angular acc
+    print 'Angular vel {:f} rad/s'.format(thetadot) #show roll rate
+    
+    index=index+1 #increment index
 
 #plot the results
 matplotlib.rcParams.update({'figure.autolayout':True})
@@ -81,4 +129,33 @@ plt.title('Roll rate vs Time')
 plt.ylabel('Roll rate (rad/s)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_thetadot)
+#canard angle over time
+plt.subplot(236)
+plt.title('Alpha vs Time')
+plt.xlim(-1,t[tos-1])
+plt.ylabel('Alpha (radians)')
+plt.xlabel('Time (s)')
+plt.plot(t,track_alpha)
 plt.show() #show figure
+
+if(withPID==1):
+    #allow user to keep PID controller settings
+    keepit=input('Save PID controller settings? (1 for Yes, 0 for No): ')
+
+    #user wants to keep
+    if(keepit==1 and withPID==1):
+        filename=raw_input('Enter filename: ') #get filename
+        #check to see if file exists    
+        if(os.path.isfile(filename)):
+            f = open(filename,"a") #append since file exists
+            f.write('setPoint={:f}, setKp={:f}, setKi={:f}\n'.format(setPoint,setKp,setKi))
+            f.close()
+        else:
+            f = open(filename, "w") #write if file doesn't exitst
+            f.write('setPoint={:f}, setKp={:f}, setKi={:f}\n'.format(setPoint,setKp,setKi))
+            f.close()
+        print 'Saved to',os.path.abspath(filename)
+    #user doesn't want to keep
+    else:
+        print 'Settings not saved'
+    

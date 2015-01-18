@@ -63,6 +63,7 @@ def lift(a, v, alt):
     # get density of atmosphere with quick exponential model
     rho = 1.2250 * exp((-9.80665 * 0.0289644 * alt)/(8.31432*288.15))
 
-    l = 0.5*C_L(a, v)*rho*v*v*fin_area
+    #l = 0.5*C_L(a, v)*rho*v*v*fin_area
+    l = 0.5*C_L(a, v)*rho*v*v*fin_area*sin(a)
     
     return l
