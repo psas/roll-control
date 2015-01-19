@@ -26,7 +26,7 @@ index=0 #index for while loop
 withPID=input('Use PID controller to control roll? (1 for Yes, 0 for no): ')
 if(withPID==1):
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
-    alpha=input('Enter initial canard angle (must be >0): ') #initial canard angle
+    alpha=input('Enter initial canard angle: ') #initial canard angle
     #alpha=math.radians(alpha) #convert to radians
     #manually enter values for PID controller
     if(getMode==1):
