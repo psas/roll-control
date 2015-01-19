@@ -12,6 +12,7 @@ import scipy.integrate as integrate #for integration
 import PIDcontroller as controller #PID controller
 import random #for random numbers
 import os.path #for saving information
+import math #for doing math stuff
 
 #for storing data
 track_thetadotdot = []
@@ -51,12 +52,13 @@ else:
     #alpha=math.radians(alpha) #convert to radians
 
 #load flight data from csv
-data=np.genfromtxt('flight_data0.csv',dtype=float,delimiter=',',names="t,altitude,velocity,acc,I")
+data=np.genfromtxt('flight_data00.csv',dtype=float,delimiter=',',names="t,altitude,velocity,acc,rr,I")
 t=data['t'] #time
 tos=len(t) #time of simulation
 altitude=data['altitude'] #altitude
 v=data['velocity'] #velocity
 acc=data['acc'] #acceleration
+rr=data['rr'] #roll rate
 I=data['I'] #Rotational moment of inertia
 g=9.81 #gravitational constant
 L=finforce.lift(alpha,v[index],altitude[index]) #initialize lift force of the canards
@@ -79,20 +81,26 @@ while(index<tos):
         
     #if PID controller is enabled
     if(withPID==1 and acc[index]>0):
-        alpha=p.update(thetadot) #PID controller update
-        #alpha=math.radians(alpha) #convert to radians
+        #keep output of PID between 15 & -15 degrees
+        if(p.update(thetadot)<math.radians(15) and p.update(thetadot)>math.radians(-15)):
+            alpha=p.update(thetadot) #PID controller update
+            #alpha=math.radians(alpha) #convert to radians
     
     L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
-    thetadotdot=float((4*L*.082)/I[index]) #angular acceleration update
     
+    if(index+1<tos-1):
+        #total angular acceleration
+        thetadotdot=float((4*L*.082)/I[index]) + (rr[index+1]-rr[index]) #angular acceleration update
+    else:
+        thetadotdot=0
     print 'Time = {:f} seconds'.format(t[index]) #show the time
     print 'Velocity is {:f} m/s '.format(v[index]) #show the velocity
     print 'Acceleration is {:f} m/s^2'.format(acc[index]) #show the acceleration
     print 'Altitude is {:f} m'.format(altitude[index]) #show the altitude
     print 'Canard angle(s) {:f} radians'.format(alpha) #show canard angles
     print 'Lift force {:f} N'.format(L) #show the lift force
-    print 'Angular acc {:f} rad/s^2'.format(thetadotdot) #show the angular acc
-    print 'Angular vel {:f} rad/s'.format(thetadot) #show roll rate
+    print 'Total Angular acc {:f} rad/s^2'.format(thetadotdot) #show the angular acc
+    print 'Total Angular vel {:f} rad/s'.format(thetadot) #show roll rate
     
     index=index+1 #increment index
 
