@@ -25,6 +25,7 @@ track_unknown = []
 
 index=0 #index for while loop
 
+numofcanards = 4
 withPID=input('Use PID controller to control roll? (1 for Yes, 0 for no): ')
 if(withPID==1):
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
@@ -89,13 +90,20 @@ while(index<tos):
             #alpha=math.radians(alpha) #convert to radians
     
     L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
-    chance = random.random()
-    if(chance<0.2):
-        unknown = random.randint(0,20)
     
+    
+#Shit happens section    
+    chance = random.random()
+    if(chance<0.1):
+        unknown = random.randint(-20,100)
+    if (chance>0.9 and numofcanards == 4):
+        numofcanards = 3    
+
+
+
     if(index+1<tos-1):
         #total angular acceleration
-        thetadotdot=float((4*L*.082)/I[index]) + (rr[index+1]-rr[index]) + unknown #angular acceleration update
+        thetadotdot=float((numofcanards*L*.082)/I[index]) + (rr[index+1]-rr[index]) + unknown #angular acceleration update
     else:
         thetadotdot=0
     print 'Time = {:f} seconds'.format(t[index]) #show the time
