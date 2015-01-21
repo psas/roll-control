@@ -14,12 +14,14 @@ import random #for random numbers
 import os.path #for saving information
 import math #for doing math stuff
 
+
 #for storing data
 track_thetadotdot = []
 track_thetadot = []
 track_lift = []
 track_alpha = []
 track_target = []
+track_unknown = []
 
 index=0 #index for while loop
 
@@ -63,13 +65,13 @@ I=data['I'] #Rotational moment of inertia
 g=9.81 #gravitational constant
 L=finforce.lift(alpha,v[index],altitude[index]) #initialize lift force of the canards
 thetadotdot=0 #initial angular acceleration
-
+unknown = random.random()
 #start simulation
 while(index<tos):   
     track_alpha.append(alpha) #store alpha
     track_lift.append(L) #store lift force of canards
     track_thetadotdot.append(thetadotdot) #store angular acceleration
-    
+    track_unknown.append(unknown)    
     #prevent integration error    
     if(index==0):
         track_thetadot.append(0) #first value should be 0 anyway
@@ -87,10 +89,13 @@ while(index<tos):
             #alpha=math.radians(alpha) #convert to radians
     
     L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
+    chance = random.random()
+    if(chance<0.2):
+        unknown = random.randint(0,20)
     
     if(index+1<tos-1):
         #total angular acceleration
-        thetadotdot=float((4*L*.082)/I[index]) + (rr[index+1]-rr[index]) #angular acceleration update
+        thetadotdot=float((4*L*.082)/I[index]) + (rr[index+1]-rr[index]) + unknown #angular acceleration update
     else:
         thetadotdot=0
     print 'Time = {:f} seconds'.format(t[index]) #show the time
@@ -138,12 +143,20 @@ plt.ylabel('Roll rate (rad/s)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_thetadot)
 #canard angle over time
+#plt.subplot(236)
+#plt.title('Alpha vs Time')
+#plt.xlim(-1,t[tos-1])
+#plt.ylabel('Alpha (radians)')
+#plt.xlabel('Time (s)')
+#plt.plot(t,track_alpha)
+#plt.show() #show figure
+
 plt.subplot(236)
-plt.title('Alpha vs Time')
+plt.title('Unknown vs Time')
 plt.xlim(-1,t[tos-1])
-plt.ylabel('Alpha (radians)')
+plt.ylabel('Unknown (rad/s)')
 plt.xlabel('Time (s)')
-plt.plot(t,track_alpha)
+plt.plot(t,track_unknown)
 plt.show() #show figure
 
 if(withPID==1):
