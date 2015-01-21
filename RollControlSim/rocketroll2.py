@@ -22,10 +22,10 @@ track_lift = []
 track_alpha = []
 track_target = []
 track_unknown = []
+track_stability =[]
 
 index=0 #index for while loop
 
-numofcanards = 4
 withPID=input('Use PID controller to control roll? (1 for Yes, 0 for no): ')
 if(withPID==1):
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
@@ -36,7 +36,8 @@ if(withPID==1):
         setPoint = input('Target roll rate: ') #set target roll rate
         setKp = input('Proportional gain for PID controller: ') #set Kp 
         setKi = input('Integral gain for PID controller: ') #set Ki
-        #randomly generate values for PID controller based on given intervals
+        setKd = input('Derivative gain for PID controller: ') #set Kd
+    #randomly generate values for PID controller based on given intervals
     else:
         print 'Enter the following inputs as two element arrays'
         print 'And make sure that the first element is less than the second'
@@ -44,9 +45,11 @@ if(withPID==1):
         getSetPointInterval=input('Set Point Interval: ')
         getKpInterval=input('Kp Interval: ')
         getKiInterval=input('Ki Interval: ')
+        getKdInterval=input('Kd Interval: ')
         setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
         setKp=random.uniform(getKpInterval[0],getKpInterval[1])
         setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+        setKd=random.uniform(getKdInterval[0],getKdInterval[1])
     #set up PID controller
     p=controller.PID(setKp,setKi,0)
     p.setPoint(setPoint)
@@ -61,18 +64,19 @@ tos=len(t) #time of simulation
 altitude=data['altitude'] #altitude
 v=data['velocity'] #velocity
 acc=data['acc'] #acceleration
-rr=data['rr'] #roll rate
 I=data['I'] #Rotational moment of inertia
 g=9.81 #gravitational constant
 L=finforce.lift(alpha,v[index],altitude[index]) #initialize lift force of the canards
 thetadotdot=0 #initial angular acceleration
-unknown = random.random()
+unknown = .2*math.cos(index*math.pi/tos) #unknown
+
 #start simulation
 while(index<tos):   
     track_alpha.append(alpha) #store alpha
     track_lift.append(L) #store lift force of canards
     track_thetadotdot.append(thetadotdot) #store angular acceleration
-    track_unknown.append(unknown)    
+    track_unknown.append(unknown)
+    
     #prevent integration error    
     if(index==0):
         track_thetadot.append(0) #first value should be 0 anyway
@@ -81,29 +85,26 @@ while(index<tos):
     else:
         thetadot=integrate.simps(track_thetadotdot[:index],t[:index]) #roll rate update
         track_thetadot.append(thetadot) #store roll rate
-        
+         
     #if PID controller is enabled
     if(withPID==1 and acc[index]>0):
         #keep output of PID between 15 & -15 degrees
-        if(p.update(thetadot)<math.radians(15) and p.update(thetadot)>math.radians(-15)):
+        if(p.update(thetadot)<15 and p.update(thetadot)>-15):
             alpha=p.update(thetadot) #PID controller update
             #alpha=math.radians(alpha) #convert to radians
     
     L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
     
-    
-#Shit happens section    
-    chance = random.random()
-    if(chance<0.1):
-        unknown = random.randint(-20,100)
-    if (chance>0.9 and numofcanards == 4):
-        numofcanards = 3    
-
-
+       
+    chance = random.random() #chance of some random occurance that causes angular acceleration
+    if(chance>0.5):
+        unknown = .2*math.cos(index*math.pi/tos)
+    else:
+        unknown = .2*math.sin(index*math.pi/tos) 
 
     if(index+1<tos-1):
         #total angular acceleration
-        thetadotdot=float((numofcanards*L*.082)/I[index]) + (rr[index+1]-rr[index]) + unknown #angular acceleration update
+        thetadotdot=float((4*L*.082)/I[index]) + unknown #angular acceleration update
     else:
         thetadotdot=0
     print 'Time = {:f} seconds'.format(t[index]) #show the time
@@ -121,51 +122,51 @@ while(index<tos):
 matplotlib.rcParams.update({'figure.autolayout':True})
 plt.figure(1)
 #ang acc vs time
-plt.subplot(231)
+plt.subplot(241)
 plt.title('Angular Acceleration vs. Time')
 plt.ylabel('Angular Acceleration (rad/s^2)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_thetadotdot)
 #altitude vs time
-plt.subplot(232)
+plt.subplot(242)
 plt.title('Altitude vs. Time')
 plt.ylabel('Altitude (m)')
 plt.xlabel('Time (s)')
 plt.plot(t,altitude)
 #velocity vs time
-plt.subplot(233)
+plt.subplot(243)
 plt.title('Velocity vs. Time')
 plt.ylabel('Velocity (m/s)')
 plt.xlabel('Time (s)')
 plt.plot(t,v)
 #canard lift vs time
-plt.subplot(234)
+plt.subplot(244)
 plt.title('Canard Lift vs Time')
 plt.ylabel('Lift force (N)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_lift)
 #roll rate vs time
-plt.subplot(235)
+plt.subplot(245)
 plt.title('Roll rate vs Time')
 plt.ylabel('Roll rate (rad/s)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_thetadot)
 #canard angle over time
-#plt.subplot(236)
-#plt.title('Alpha vs Time')
-#plt.xlim(-1,t[tos-1])
-#plt.ylabel('Alpha (radians)')
-#plt.xlabel('Time (s)')
-#plt.plot(t,track_alpha)
-#plt.show() #show figure
-
-plt.subplot(236)
+plt.subplot(246)
+plt.title('Alpha vs Time')
+plt.xlim(-1,t[tos-1])
+plt.ylabel('Alpha (radians)')
+plt.xlabel('Time (s)')
+plt.plot(t,track_alpha)
+#unknown vs. time
+plt.subplot(247)
 plt.title('Unknown vs Time')
 plt.xlim(-1,t[tos-1])
 plt.ylabel('Unknown (rad/s)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_unknown)
 plt.show() #show figure
+
 
 if(withPID==1):
     #allow user to keep PID controller settings
