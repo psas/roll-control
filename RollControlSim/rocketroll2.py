@@ -22,7 +22,6 @@ track_lift = []
 track_alpha = []
 track_target = []
 track_unknown = []
-track_stability =[]
 
 index=0 #index for while loop
 
@@ -30,7 +29,7 @@ withPID=input('Use PID controller to control roll? (1 for Yes, 0 for no): ')
 if(withPID==1):
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
     alpha=input('Enter initial canard angle: ') #initial canard angle
-    #alpha=math.radians(alpha) #convert to radians
+
     #manually enter values for PID controller
     if(getMode==1):
         setPoint = input('Target roll rate: ') #set target roll rate
@@ -51,11 +50,11 @@ if(withPID==1):
         setKi=random.uniform(getKiInterval[0],getKiInterval[1])
         setKd=random.uniform(getKdInterval[0],getKdInterval[1])
     #set up PID controller
-    p=controller.PID(setKp,setKi,0)
+    p=controller.PID(setKp,setKi,setKd)
     p.setPoint(setPoint)
 else:
     alpha=input('Enter canard angle in degrees: ') #get canard angle
-    #alpha=math.radians(alpha) #convert to radians
+
 
 #load flight data from csv
 data=np.genfromtxt('flight_data00.csv',dtype=float,delimiter=',',names="t,altitude,velocity,acc,rr,I")
@@ -65,10 +64,9 @@ altitude=data['altitude'] #altitude
 v=data['velocity'] #velocity
 acc=data['acc'] #acceleration
 I=data['I'] #Rotational moment of inertia
-g=9.81 #gravitational constant
 L=finforce.lift(alpha,v[index],altitude[index]) #initialize lift force of the canards
 thetadotdot=0 #initial angular acceleration
-unknown = .2*math.cos(index*math.pi/tos) #unknown
+unknown = 0 #unknown
 
 #start simulation
 while(index<tos):   
@@ -91,22 +89,13 @@ while(index<tos):
         #keep output of PID between 15 & -15 degrees
         if(p.update(thetadot)<15 and p.update(thetadot)>-15):
             alpha=p.update(thetadot) #PID controller update
-            #alpha=math.radians(alpha) #convert to radians
     
     L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
-    
-       
-    chance = random.random() #chance of some random occurance that causes angular acceleration
-    if(chance>0.5):
-        unknown = .2*math.cos(index*math.pi/tos)
-    else:
-        unknown = .2*math.sin(index*math.pi/tos) 
+    unknown = math.cos(t[index]*2*math.pi/10) #insert some angular acceleration
 
-    if(index+1<tos-1):
-        #total angular acceleration
-        thetadotdot=float((4*L*.082)/I[index]) + unknown #angular acceleration update
-    else:
-        thetadotdot=0
+    #total angular acceleration
+    thetadotdot=float((4*L*.082)/I[index]) + unknown #angular acceleration update
+    
     print 'Time = {:f} seconds'.format(t[index]) #show the time
     print 'Velocity is {:f} m/s '.format(v[index]) #show the velocity
     print 'Acceleration is {:f} m/s^2'.format(acc[index]) #show the acceleration
@@ -155,25 +144,25 @@ plt.plot(t,track_thetadot)
 plt.subplot(246)
 plt.title('Alpha vs Time')
 plt.xlim(-1,t[tos-1])
-plt.ylabel('Alpha (radians)')
+plt.ylabel('Alpha (degrees)')
 plt.xlabel('Time (s)')
 plt.plot(t,track_alpha)
 #unknown vs. time
 plt.subplot(247)
 plt.title('Unknown vs Time')
 plt.xlim(-1,t[tos-1])
-plt.ylabel('Unknown (rad/s)')
+plt.ylabel('Unknown')
 plt.xlabel('Time (s)')
 plt.plot(t,track_unknown)
 plt.show() #show figure
 
-
-if(withPID==1):
+#option to saveSettings()
+def saveSettings():
     #allow user to keep PID controller settings
     keepit=input('Save PID controller settings? (1 for Yes, 0 for No): ')
 
     #user wants to keep
-    if(keepit==1 and withPID==1):
+    if(keepit==1):
         filename=raw_input('Enter filename: ') #get filename
         #check to see if file exists    
         if(os.path.isfile(filename)):
