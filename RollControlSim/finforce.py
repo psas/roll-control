@@ -66,4 +66,7 @@ def lift(a, v, alt):
     #l = 0.5*C_L(a, v)*rho*v*v*fin_area
     l = 0.5*C_L(a, v)*rho*v*v*fin_area*sin(a)
     
-    return l
+    if(a<0):
+        return -l
+    else:
+        return l
