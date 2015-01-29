@@ -1,18 +1,159 @@
-#The recipe gives simple implementation of a Discrete Proportional-Integral-Derivative (PID) controller. PID controller gives output value for error between desired reference input and measurement feedback to minimize error value.
-#More information: http://en.wikipedia.org/wiki/PID_controller
-#
-#cnr437@gmail.com
-#
-#######	Example	#########
-#
-#p=PID(3.0,0.4,1.2)
-#p.setPoint(5.0)
-#while True:
-#     pid = p.update(measurement_value)
-#
-#
+import random #for random values
+
+#for roll rate
+def setupRollRatePID():
+    getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
+    
+    #manually enter values for PID controller
+    if(getMode==1):
+        setPoint = input('Target angular velocity: ') #set target roll rate
+        setKp = input('Proportional gain for PID controller: ') #set Kp 
+        setKi = input('Integral gain for PID controller: ') #set Ki
+        setKd = input('Derivative gain for PID controller: ') #set Kd
+    #randomly generate values for PID controller based on given intervals
+    else:
+        print 'Enter the following inputs as two element arrays'
+        print 'And make sure that the first element is less than the second'
+        print 'Ex: [0,1]'
+        getSetPointInterval=input('Set Point Interval: ')
+        getKpInterval=input('Kp Interval: ')
+        getKiInterval=input('Ki Interval: ')
+        getKdInterval=input('Kd Interval: ')
+        setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
+        setKp=random.uniform(getKpInterval[0],getKpInterval[1])
+        setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+        setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    #set up PID controller
+    p=PIDController(setKp,setKi,setKd)
+    p.setTarget(setPoint)
+    return p
+    
+#for angular position
+def setupThetaPID():
+    getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
+    #alpha=input('Enter initial canard angle: ') #initial canard angle
+
+    #manually enter values for PID controller
+    if(getMode==1):
+        setPoint = input('Target theta: ') #set target roll rate
+        setKp = input('Proportional gain for PID controller: ') #set Kp 
+        setKi = input('Integral gain for PID controller: ') #set Ki
+        setKd = input('Derivative gain for PID controller: ') #set Kd
+    #randomly generate values for PID controller based on given intervals
+    else:
+        print 'Enter the following inputs as two element arrays'
+        print 'And make sure that the first element is less than the second'
+        print 'Ex: [0,1]'
+        getSetPointInterval=input('Set Point Interval: ')
+        getKpInterval=input('Kp Interval: ')
+        getKiInterval=input('Ki Interval: ')
+        getKdInterval=input('Kd Interval: ')
+        setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
+        setKp=random.uniform(getKpInterval[0],getKpInterval[1])
+        setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+        setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    #set up PID controller
+    p=PIDController(setKp,setKi,setKd)
+    p.setTarget(setPoint)
+    return p
+
+class PIDController:
+    def __init__(self,p,i,d):
+        self.kP=p
+        self.kI=i
+        self.kD=d
+        self.target=0
+
+        self.lastError=0
+        self.integrator=0
+
+    def setTarget(self,newTarget):
+        self.target=newTarget
+        self.integrator=0
+
+    def step(self,currentValue):
+        """
+        Calculates the error and derives a desired output value.
+        """
+        # determine the error by simply looking at the difference between
+        # current value and target value.
+        error=currentValue-self.target
+
+        # Build the output by summing the contributions of the
+        # proportional, integral, and derivative models.
+        output= (self.kP * error
+                 + self.kI * self.integrator
+                 + self.kD * (error - self.lastError)
+                 )
+
+        # Remember the error for the derivative model
+        self.lastError=error
+        # Add the error to the integral model
+        self.integrator+=error
+
+        return output
 
 
+'''
+This is another implementation of the PID controller, slightly different then the one above and it was the one being used originally
+
+#for roll rate
+def setupRollRatePID():
+    getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
+    
+    #manually enter values for PID controller
+    if(getMode==1):
+        setPoint = input('Target roll rate: ') #set target roll rate
+        setKp = input('Proportional gain for PID controller: ') #set Kp 
+        setKi = input('Integral gain for PID controller: ') #set Ki
+        setKd = input('Derivative gain for PID controller: ') #set Kd
+    #randomly generate values for PID controller based on given intervals
+    else:
+        print 'Enter the following inputs as two element arrays'
+        print 'And make sure that the first element is less than the second'
+        print 'Ex: [0,1]'
+        getSetPointInterval=input('Set Point Interval: ')
+        getKpInterval=input('Kp Interval: ')
+        getKiInterval=input('Ki Interval: ')
+        getKdInterval=input('Kd Interval: ')
+        setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
+        setKp=random.uniform(getKpInterval[0],getKpInterval[1])
+        setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+        setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    #set up PID controller
+    p=PID(setKp,setKi,setKd)
+    p.setPoint(setPoint)
+    return p
+    
+#for angular position
+def setupThetaPID():
+    getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
+    
+    #manually enter values for PID controller
+    if(getMode==1):
+        setPoint = input('Target theta: ') #set target roll rate
+        setKp = input('Proportional gain for PID controller: ') #set Kp 
+        setKi = input('Integral gain for PID controller: ') #set Ki
+        setKd = input('Derivative gain for PID controller: ') #set Kd
+    #randomly generate values for PID controller based on given intervals
+    else:
+        print 'Enter the following inputs as two element arrays'
+        print 'And make sure that the first element is less than the second'
+        print 'Ex: [0,1]'
+        getSetPointInterval=input('Set Point Interval: ')
+        getKpInterval=input('Kp Interval: ')
+        getKiInterval=input('Ki Interval: ')
+        getKdInterval=input('Kd Interval: ')
+        setPoint=random.uniform(getSetPointInterval[0],getSetPointInterval[1])
+        setKp=random.uniform(getKpInterval[0],getKpInterval[1])
+        setKi=random.uniform(getKiInterval[0],getKiInterval[1])
+        setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    #set up PID controller
+    p=PID(setKp,setKi,setKd)
+    p.setPoint(setPoint)
+    return p
+
+#old PID controller implementation
 class PID:
 	"""
 	Discrete PID control
@@ -89,3 +230,4 @@ class PID:
 
 	def getDerivator(self):
 		return self.Derivator
+'''
