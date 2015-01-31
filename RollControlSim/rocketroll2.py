@@ -16,6 +16,7 @@ import scipy.integrate as integrate #for integration
 import PIDcontroller as controller #PID controller
 import os.path #for saving information
 import math #for doing math stuff
+import random
 
 #for storing data
 track_thetadotdot = []
@@ -33,6 +34,10 @@ index=0 #index for while loop
 withPID=input('Use PID controller to control roll & theta? (1 for Yes, 0 for no): ')
 if(withPID==1):
     alpha=input('Enter initial canard angle (deg): ') #initial canard angle
+    delay=random.randint(0,10) #set random value for delay
+    angle=[] #array for canard angle values
+    for i in range(delay):
+        angle.append(alpha) #initialize array with value for initial canard angle
     p_rr=controller.setupRollRatePID() #Set up roll rate PID
     p_theta=controller.setupThetaPID() #Set up Theta PID
 else:
@@ -59,7 +64,7 @@ theta_correction=0
 
 #start simulation
 while(index<tos):   
-    track_alpha.append(alpha) #store alpha
+    track_alpha.append(angle[index]) #store canard angle
     track_lift.append(L) #store lift force of canards
     track_theta.append(theta) #store angular position
     track_thetadot.append(thetadot) #store angular velocity
@@ -76,7 +81,8 @@ while(index<tos):
         p_rr.setTarget=theta_correction
         thetadot_correction=p_rr.step(thetadot)
         alpha=thetadot_correction #TODO: need relationship for translating thetadot_correction into a canard angle (alpha)
-    L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
+        angle.append(alpha) #add alpha to angle array
+    L=finforce.lift(angle[index],v[index],altitude[index]) #lift force update
     
     #sqaure waves
     #if(index>87 and index<127):
