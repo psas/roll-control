@@ -34,7 +34,7 @@ index=0 #index for while loop
 withPID=input('Use PID controller to control roll & theta? (1 for Yes, 0 for no): ')
 if(withPID==1):
     alpha=input('Enter initial canard angle (deg): ') #initial canard angle
-    delay=random.randint(0,10) #set random value for delay
+    delay=input('Enter delay: ') #set value for delay
     angle=[] #array for canard angle values
     for i in range(delay):
         angle.append(alpha) #initialize array with value for initial canard angle
@@ -63,8 +63,7 @@ thetadot_correction=0
 theta_correction=0
 
 #start simulation
-while(index<tos):   
-    track_alpha.append(angle[index]) #store canard angle
+while(index<tos):
     track_lift.append(L) #store lift force of canards
     track_theta.append(theta) #store angular position
     track_thetadot.append(thetadot) #store angular velocity
@@ -76,13 +75,17 @@ while(index<tos):
             
     #if PID controller is enabled
     if(withPID==1):
+        track_alpha.append(angle[index]) #store canard angle
         #PID controller updates
         theta_correction=p_theta.step(theta)
         p_rr.setTarget=theta_correction
         thetadot_correction=p_rr.step(thetadot)
         alpha=thetadot_correction #TODO: need relationship for translating thetadot_correction into a canard angle (alpha)
         angle.append(alpha) #add alpha to angle array
-    L=finforce.lift(angle[index],v[index],altitude[index]) #lift force update
+        L=finforce.lift(angle[index],v[index],altitude[index]) #lift force update
+    else:
+        track_alpha.append(alpha) #store canard angle
+        L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
     
     #sqaure waves
     #if(index>87 and index<127):
@@ -95,7 +98,7 @@ while(index<tos):
      #   alpha = 0
       #  unknown = 0
     
-    unknown = t[index]*math.sin(t[index]*math.pi/20) #insert some angular acceleration
+    unknown = t[index]*math.sin(t[index]*math.pi/10) #insert some angular acceleration
 
     
     #prevent integration error    
@@ -217,4 +220,3 @@ def saveSettings():
     #user doesn't want to keep
     else:
         print 'Settings not saved'
-    
