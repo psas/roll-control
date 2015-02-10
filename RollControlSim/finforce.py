@@ -70,3 +70,42 @@ def lift(a, v, alt):
         return -l
     else:
         return l
+
+#computes MOI as time progresses
+def getMOI(t):
+    # LV2.3 Constants
+    I_0 = 0.086
+    I_1 = 0.077    
+    
+    # compute I
+    if t <= 0:
+        I = I_0
+    elif t < 5.6:
+        I = I_0 + (I_1-I_0)*t/5.6
+    else:
+        I = I_1
+    return I
+
+def estimate_alpha(x, v, aa, t):
+    """Return an estimated fin angle of attack for to
+    achieve the required angular acceleration.
+    
+    :param x: Altitude (meters, MSL)
+    :param v: Air velocity (m/s)
+    :param aa: Angular acceleration to compute alpha for (degrees/s/s)
+    :param t: Time (seconds since launch)
+    :returns fin angle:
+    
+    """
+    # LV2.3 Constants
+    kc = 0.053
+    fin_area = 1.13e-3
+    fin_arm = 0.085
+    
+    # compute rho
+    rho = 1.2250 * exp((-9.80665 * 0.0289644 * x)/(8.31432*288.15))
+    
+    #get MOI
+    I = getMOI(t)
+        
+    return (aa*I)/(2*kc*rho*v*v*fin_area*fin_arm)

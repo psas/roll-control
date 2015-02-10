@@ -16,7 +16,7 @@ import scipy.integrate as integrate #for integration
 import PIDcontroller as controller #PID controller
 import os.path #for saving information
 import math #for doing math stuff
-import random
+#import random
 
 #for storing data
 track_thetadotdot = []
@@ -77,10 +77,10 @@ while(index<tos):
     if(withPID==1):
         track_alpha.append(angle[index]) #store canard angle
         #PID controller updates
-        theta_correction=p_theta.step(theta)
-        p_rr.setTarget=theta_correction
-        thetadot_correction=p_rr.step(thetadot)
-        alpha=thetadot_correction #TODO: need relationship for translating thetadot_correction into a canard angle (alpha)
+        theta_correction=p_theta.step(theta) #correction for angular position
+        p_rr.setTarget=theta_correction #change set target for thetadot PID
+        thetadot_correction=p_rr.step(thetadot) #correction for angular velocity
+        alpha=finforce.estimate_alpha(altitude[index], v[index], thetadot_correction, t[index]) #translate correction to fin angle
         angle.append(alpha) #add alpha to angle array
         L=finforce.lift(angle[index],v[index],altitude[index]) #lift force update
     else:
@@ -88,22 +88,22 @@ while(index<tos):
         L=finforce.lift(alpha,v[index],altitude[index]) #lift force update
     
     #sqaure waves
-    #if(index>87 and index<127):
-     #   alpha = 1
-      #  unknown = -1
-    #elif(index>127 and index<167):
-     #   alpha = -1
-     #   unknown = 1
-    #else:
-     #   alpha = 0
-      #  unknown = 0
+    if(index>87 and index<127):
+       alpha = 1
+       unknown = -1
+    elif(index>127 and index<167):
+        alpha = -1
+        unknown = 1
+    else:
+        alpha = 0
+        unknown = 0
     
-    unknown = t[index]*math.sin(t[index]*math.pi/10) #insert some angular acceleration
+    #unknown = t[index]*math.sin(t[index]*math.pi/10) #insert some angular acceleration
 
     
     #prevent integration error    
     if(index>0):
-        thetadotdot=float((4*L*.082)/.08594) + unknown #total angular acceleration update
+        thetadotdot=float((4*L*.082)/finforce.getMOI(t[index])) + unknown #total angular acceleration update
         thetadot=integrate.simps(track_thetadotdot[:index],t[:index]) #angular velocity update
         theta=integrate.simps(track_thetadot[:index],t[:index]) #angular position update
     
