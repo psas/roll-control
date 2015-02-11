@@ -73,8 +73,8 @@ while(index<tos):
     ctrl_sig3.append(theta_correction)
     angular_freq.append(thetadot/.082) #store angular frequency (not sure why I have this in here)
             
-    #if PID controller is enabled
-    if(withPID==1):
+    #if PID controller is enabled and we've launched
+    if(withPID==1 and altitude[index]>0):
         track_alpha.append(angle[index]) #store canard angle
         #PID controller updates
         theta_correction=p_theta.step(theta) #correction for angular position
@@ -83,6 +83,11 @@ while(index<tos):
         alpha=finforce.estimate_alpha(altitude[index], v[index], thetadot_correction, t[index]) #translate correction to fin angle
         angle.append(alpha) #add alpha to angle array
         L=finforce.lift(angle[index],v[index],altitude[index]) #lift force update
+    #if PID controller is enabled and we haven't launched yet
+    elif(withPID==1 and altitude[index]<=0):
+        track_alpha.append(angle[index]) #store canard angle
+        alpha=angle[index-1] #canard angle is previous angle
+        angle.append(alpha) #add alpha to angle array
     else:
         track_alpha.append(alpha) #store canard angle
         L=finforce.lift(alpha,v[index],altitude[index]) #lift force update

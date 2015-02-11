@@ -107,5 +107,12 @@ def estimate_alpha(x, v, aa, t):
     
     #get MOI
     I = getMOI(t)
-        
-    return (aa*I)/(2*kc*rho*v*v*fin_area*fin_arm)
+    
+    estimate = (aa*I)/(2*kc*rho*v*v*fin_area*fin_arm)
+
+    if(estimate > 15):
+        return 15
+    elif(estimate < -15):
+        return -15
+    else:
+        return estimate
