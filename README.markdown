@@ -2,6 +2,13 @@
 
 Math, data, and algorithms for our canard roll control setup.
 
+## Setup:
+
+![overview](http://psas.github.io/roll-control/diagrams/PIDs.svg)
+
+We have a modular flight computer stack. There is an ethernet bridge between sensors and actuators. The FC in the middle is running a state estimator (kalman filter) and a nested PID loop as in the above diagram.
+
+
 ## Canard Aerodynamics
 
 Gathering up the theory from past roll teams for a theoretical model of the aerodynamics on delta wings:
