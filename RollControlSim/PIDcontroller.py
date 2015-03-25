@@ -1,9 +1,9 @@
 import random #for random values
 
 #for roll rate
-def setupRollRatePID():
+def setupRollRatePID(Kd,Ki,Kp,setPoint):
+    '''
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
-    
     #manually enter values for PID controller
     if(getMode==1):
         setPoint = input('Target angular velocity: ') #set target roll rate
@@ -23,13 +23,15 @@ def setupRollRatePID():
         setKp=random.uniform(getKpInterval[0],getKpInterval[1])
         setKi=random.uniform(getKiInterval[0],getKiInterval[1])
         setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    '''
     #set up PID controller
-    p=PIDController(setKp,setKi,setKd)
+    p=PIDController(Kp,Ki,Kd)
     p.setTarget(setPoint)
     return p
     
 #for angular position
-def setupThetaPID():
+def setupThetaPID(Kd,Ki,Kp,setPoint):
+    '''
     getMode=input('Select test mode: (1 for manual 0 for random): ') #test mode
     #alpha=input('Enter initial canard angle: ') #initial canard angle
 
@@ -52,8 +54,9 @@ def setupThetaPID():
         setKp=random.uniform(getKpInterval[0],getKpInterval[1])
         setKi=random.uniform(getKiInterval[0],getKiInterval[1])
         setKd=random.uniform(getKdInterval[0],getKdInterval[1])
+    '''
     #set up PID controller
-    p=PIDController(setKp,setKi,setKd)
+    p=PIDController(Kp,Ki,Kd)
     p.setTarget(setPoint)
     return p
 

@@ -2,7 +2,7 @@
 #Originally programmed by Nathan Bergey
 #Modified by William Harrington for testing with rocketroll2.py
 
-from math import sin, cos, radians, exp
+from math import sin, cos, radians, exp, sqrt, degrees
 
 # Define PSAS wing:
 k_p = 2.45
@@ -27,6 +27,34 @@ def C_L(a, v):
         cosa = cos(a)
         cl = k_p*sina*cosa*cosa
         cl += k_v*cosa*sina*sina
+        return cl
+    
+    # Supersonic case
+    def _supersonic():
+        cl = a*Cl_base
+        return cl
+
+    if v <= 265:
+        return _subsonic()
+    elif v < 330:
+        # Intepolate between super and subsonic
+        y0 = _subsonic()
+        y1 = _supersonic()
+        x0 = 265
+        x1 = 330
+        cl = y0 + (y1-y0)*(v - x0)/(x1-x0)
+        return cl
+    else:
+        return _supersonic()
+
+#Polynomial Approximation for Coefficient of Lift
+def C_L_aprox(a, v):
+
+    # Subsonic case
+    def _subsonic():
+        af = 0.0006
+        bf = 0.045
+        cl = af*a**2 + bf*a
         return cl
     
     # Supersonic case
@@ -98,9 +126,12 @@ def estimate_alpha(x, v, aa, t):
     
     """
     # LV2.3 Constants
-    kc = 0.053
     fin_area = 1.13e-3
     fin_arm = 0.085
+    af = 0.0006
+    bf = 0.045
+    cl_super = 3.2
+    
     
     # compute rho
     rho = 1.2250 * exp((-9.80665 * 0.0289644 * x)/(8.31432*288.15))
@@ -108,11 +139,37 @@ def estimate_alpha(x, v, aa, t):
     #get MOI
     I = getMOI(t)
     
-    estimate = (aa*I)/(2*kc*rho*v*v*fin_area*fin_arm)
-
-    if(estimate > 15):
-        return 15
-    elif(estimate < -15):
-        return -15
+    def _subsonic():
+        alpha = sqrt(abs(2*aa*I*af)/(rho*v*v*fin_area*fin_arm) + bf*bf) - bf
+        alpha = alpha / (2*af)
+        return alpha / 10**3
+        #if degrees(alpha)>15:
+        #    return 15
+        #elif degrees(alpha)<-15:
+        #    return -15
+        #else:
+        #    return degrees(alpha)
+    
+    def _supersonic():
+        alpha = (aa*I)/(2*rho*v*v*fin_area*fin_arm*cl_super)
+        return alpha / 10**3
+        #if degrees(alpha)>15:
+        #    return 15
+        #if degrees(alpha)<-15:
+        #    return -15
+        #else:
+        #    return degrees(alpha)
+    
+    
+    if v <= 265:
+        return _subsonic()
+    elif v < 330:
+        # Intepolate between super and subsonic
+        y0 = _subsonic()
+        y1 = _supersonic()
+        x0 = 265
+        x1 = 330
+        cl = y0 + (y1-y0)*(v - x0)/(x1-x0)
+        return cl
     else:
-        return estimate
+        return _supersonic()
