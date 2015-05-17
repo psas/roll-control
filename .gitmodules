@@ -1,0 +1,3 @@
+[submodule "data/Launch-8"]
+	path = data/Launch-8
+	url = https://github.com/psas/Launch-8.git
