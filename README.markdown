@@ -20,8 +20,3 @@ Gathering up the theory from past roll teams for a theoretical model of the aero
 Tring to use Launch 11 as a wind tunnel test:
 
 **[notebooks/l11-wind-tunnel.ipynb](http://nbviewer.ipython.org/github/psas/roll-control/blob/master/notebooks/l11-wind-tunnel.ipynb)**
-
-
-Note: 
- - Ixx with motor:  `86651.40` pounds&middot;in^2
- - Ixx without fuel: `68639.94` pounds&middot;in^2
