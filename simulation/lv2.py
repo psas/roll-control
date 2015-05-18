@@ -95,4 +95,8 @@ def angular_accel(a, x, v, t):
     else:
         I = I_1
 
-    return degrees((4*lift(a, v, x)*fin_arm)/I)
+    aa = degrees((4*lift(a, v, x)*fin_arm)/I)
+
+    if a < 0:
+        return -aa
+    return aa
