@@ -1,6 +1,6 @@
 """Canard Aerodynamics
 """
-from math import sin, cos, radians, exp, sqrt, degrees
+from math import sin, cos, radians, exp, degrees
 
 # Define PSAS wing:
 k_p = 2.45
@@ -15,6 +15,7 @@ I_1 = 0.077         # m^2 kg
 
 # Data storage
 current_alpha = 0
+
 
 def C_L(a, v):
     """Find C_L for a given speed and angle of attack
@@ -72,7 +73,7 @@ def lift(a, v, alt):
     # lift
     l = 0.5*C_L(a, v)*rho*v*v*fin_area
 
-    if(a<0):
+    if(a < 0):
         return -l
     else:
         return l
@@ -112,15 +113,17 @@ def servo(alpha, t):
     :returns actual canard angle in degrees:
 
     """
-    
+
     global current_alpha
 
-    t_ms = int(round(t * 1000)) # convert time to ms
-    
+    t_ms = int(round(t * 1000))  # convert time to ms
+
     # servo only responds every 3.3ms
     if (t_ms % 3) == 0:
         current_alpha = alpha
-    
+
+    # clamp the output to only 15deg
+    if current_alpha > 15:
+        current_alpha = 15
+
     return current_alpha
-        
-        

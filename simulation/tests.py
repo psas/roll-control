@@ -50,7 +50,7 @@ class TestLV2(unittest.TestCase):
         aa = lv2.angular_accel(0.5, 3000, 300, 5)
         self.assertAlmostEqual(aa, 272.8236256, places=4)
 
-    def test_aa_case0(self):
+    def test_aa_case1(self):
         aa = lv2.angular_accel(13, 4000, 100, 20)
         self.assertAlmostEqual(aa, 742.1556022, places=4)
 
@@ -60,13 +60,17 @@ class TestLV2(unittest.TestCase):
 
     def test_aa_neg(self):
         aa = lv2.angular_accel(-13, 4000, 100, 20)
-        self.assertLess(aa, 10)    
+        self.assertLess(aa, 10)
 
     def test_servo(self):
         alpha = lv2.servo(5,0.135)
         self.assertEqual(alpha, 5)
         alpha = lv2.servo(4,0.136)
         self.assertEqual(alpha,5)
+
+    def test_servo_15(self):
+        alpha = lv2.servo(34,0.135)
+        self.assertEqual(alpha,15)
 
 if __name__ == '__main__':
     unittest.main()
