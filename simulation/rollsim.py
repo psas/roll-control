@@ -5,6 +5,7 @@ from scipy.signal import resample
 import matplotlib.pyplot as plt
 import math
 import random
+import PIDcontroller as controller
 
 # define things
 or_sample_rate = 100        # Hz
@@ -24,13 +25,14 @@ nsamples = (len(time) * adis_sample_rate)/or_sample_rate
 #altitude = resample(altitude, nsamples)
 #velocity = resample(velocity, nsamples)
 
-
+pid=controller.setupRollRatePID(10,1,0,0)
 angular_accel = []
 roll = [0]
 angle = [0]
 for i, t in enumerate(time):
-    # TODO: PID goes here
-    
+    correction = pid.step(roll[-1])
+    print correction
+    # TODO: Reverse look up for alpha (canard angle)
     a = 0 # canard angle in degrees
     a = lv2.servo(a, t) # request servo update canard angle 
     x = altitude[i]
