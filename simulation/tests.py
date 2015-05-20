@@ -62,5 +62,11 @@ class TestLV2(unittest.TestCase):
         aa = lv2.angular_accel(-13, 4000, 100, 20)
         self.assertLess(aa, 10)    
 
+    def test_servo(self):
+        alpha = lv2.servo(5,0.135)
+        self.assertEqual(alpha, 5)
+        alpha = lv2.servo(4,0.136)
+        self.assertEqual(alpha,5)
+
 if __name__ == '__main__':
     unittest.main()

@@ -13,6 +13,8 @@ fin_arm = 0.085     # m
 I_0 = 0.086         # m^2 kg
 I_1 = 0.077         # m^2 kg
 
+# Data storage
+current_alpha = 0
 
 def C_L(a, v):
     """Find C_L for a given speed and angle of attack
@@ -100,3 +102,25 @@ def angular_accel(a, x, v, t):
     if a < 0:
         return -aa
     return aa
+
+
+def servo(alpha, t):
+    """Outputs canard fin position when requested by the flight computer
+
+    :param alpha: requested canard angle in degrees
+    :param t:     current time in seconds
+    :returns actual canard angle in degrees:
+
+    """
+    
+    global current_alpha
+
+    t_ms = int(round(t * 1000)) # convert time to ms
+    
+    # servo only responds every 3.3ms
+    if (t_ms % 3) == 0:
+        current_alpha = alpha
+    
+    return current_alpha
+        
+        
