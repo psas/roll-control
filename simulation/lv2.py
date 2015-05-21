@@ -122,8 +122,10 @@ def servo(alpha, t):
     if (t_ms % 3) == 0:
         current_alpha = alpha
 
-    # clamp the output to only 15deg
+    # clamp the output to only +/- 15deg
     if current_alpha > 15:
         current_alpha = 15
+    if current_alpha < -15:
+        current_alpha = -15
 
     return current_alpha
