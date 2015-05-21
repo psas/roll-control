@@ -63,14 +63,18 @@ class TestLV2(unittest.TestCase):
         self.assertLess(aa, 10)
 
     def test_servo(self):
-        alpha = lv2.servo(5,0.135)
+        alpha = lv2.servo(5, 0.135)
         self.assertEqual(alpha, 5)
-        alpha = lv2.servo(4,0.136)
-        self.assertEqual(alpha,5)
+        alpha = lv2.servo(4, 0.136)
+        self.assertEqual(alpha, 5)
 
     def test_servo_15(self):
-        alpha = lv2.servo(34,0.135)
-        self.assertEqual(alpha,15)
+        alpha = lv2.servo(34, 0.135)
+        self.assertEqual(alpha, 15)
+    
+    def test_servo_neg15(self):
+        alpha = lv2.servo(-34, 0.135)
+        self.assertEqual(alpha, -15)
 
 if __name__ == '__main__':
     unittest.main()
