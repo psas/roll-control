@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import lv2
 import unittest
+from math import fabs
 
 
 class TestLV2(unittest.TestCase):
@@ -71,10 +72,24 @@ class TestLV2(unittest.TestCase):
     def test_servo_15(self):
         alpha = lv2.servo(34, 0.135)
         self.assertEqual(alpha, 15)
-    
+
     def test_servo_neg15(self):
         alpha = lv2.servo(-34, 0.135)
         self.assertEqual(alpha, -15)
+
+    def test_reverselookup(self):
+
+        for test_alpha in range(1, 15):
+            for alt in range(100,10000, 500):
+                for vel in range(50, 400, 50):
+                    for t in range(30):
+                        aa = lv2.angular_accel(test_alpha, alt, vel, t)
+                        alpha  = lv2.estimate_alpha(aa, alt, vel, t)
+
+                        # not worse than 5% error:
+                        percent_diff = (fabs(alpha - test_alpha)/test_alpha)*100.0
+                        self.assertLess(percent_diff, 5)
+
 
 if __name__ == '__main__':
     unittest.main()
