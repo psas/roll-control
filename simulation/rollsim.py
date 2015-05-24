@@ -65,7 +65,7 @@ for i, t in enumerate(time):
     pids.append(correction)
 
 # chart
-fig, (ax0, ax1, ax2, ax3) = plt.subplots(nrows=4, sharex=True)
+fig, (ax0, ax1, ax2, ax3) = plt.subplots(nrows=4, sharex=True, figsize=(16,9))
 ax0.plot(time, roll[1:], 'r-')
 ax0.set_title('Roll Rate')
 ax0.set_ylabel(r'Roll Rate [${}^0/s$]')
