@@ -23,7 +23,7 @@ class PIDController:
 
         # determine the error by simply looking at the difference between
         # current value and target value.
-        error = currentValue - self.target
+        error = self.target - currentValue
 
         # Build the output by summing the contributions of the
         # proportional, integral, and derivative models.

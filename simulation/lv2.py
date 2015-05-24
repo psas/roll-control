@@ -121,7 +121,7 @@ def angular_accel(a, x, v, t):
     return aa
 
 
-def estimate_alpha(aa, x, v, t):
+def estimate_alpha(set_aa, x, v, t):
     """Return an estimated fin angle of attack for to
     achieve the required angular acceleration.
 
@@ -134,10 +134,10 @@ def estimate_alpha(aa, x, v, t):
     """
 
     # obvious cases (and avoid divide by 0):
-    if fabs(aa) < 1 or v < 1:
+    if fabs(set_aa) < 1 or v < 1:
         return 0
 
-    aa = radians(aa)
+    aa = fabs(radians(set_aa))
 
     # Fit Constants
     af = 0.0006
@@ -147,7 +147,7 @@ def estimate_alpha(aa, x, v, t):
     rd = rho(x)
 
     def _subsonic():
-        alpha = sqrt(abs(2*aa*I*af)/(rd*v*v*fin_area*fin_arm) + bf*bf) - bf
+        alpha = sqrt(fabs(2*aa*I*af)/(rd*v*v*fin_area*fin_arm) + bf*bf) - bf
         alpha = alpha / (2*af)
         return alpha
 
@@ -155,8 +155,9 @@ def estimate_alpha(aa, x, v, t):
         alpha = (aa*I)/(2*rd*v*v*fin_area*fin_arm*Cl_base)
         return degrees(alpha)
 
+    output = 0
     if v <= 265:
-        return _subsonic()
+        output =  _subsonic()
     elif v < 330:
         # Intepolate between super and subsonic
         y0 = _subsonic()
@@ -164,9 +165,13 @@ def estimate_alpha(aa, x, v, t):
         x0 = 265
         x1 = 330
         cl = y0 + (y1-y0)*(v - x0)/(x1-x0)
-        return cl
+        output =  cl
     else:
-        return _supersonic()
+        output =  _supersonic()
+
+    if set_aa < 0:
+        return -output
+    return output
 
 
 def servo(alpha, t):

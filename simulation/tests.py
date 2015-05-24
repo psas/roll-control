@@ -68,14 +68,22 @@ class TestLV2(unittest.TestCase):
         self.assertEqual(alpha, 5)
         alpha = lv2.servo(4, 0.136)
         self.assertEqual(alpha, 5)
-
-    def test_servo_15(self):
         alpha = lv2.servo(34, 0.135)
         self.assertEqual(alpha, 15)
-
-    def test_servo_neg15(self):
         alpha = lv2.servo(-34, 0.135)
         self.assertEqual(alpha, -15)
+        alpha = lv2.servo(-4, 0.135)
+        self.assertEqual(alpha, -4)
+
+    def test_reverselookup_net(self):
+        aa = lv2.angular_accel(3, 1000, 100, 10)
+        alpha  = lv2.estimate_alpha(-aa, 1000, 100, 10)
+
+        self.assertLess(alpha, 0)
+
+        # not worse than 5% error:
+        percent_diff = (fabs(fabs(alpha) - 3)/3)*100.0
+        self.assertLess(percent_diff, 5)
 
     def test_reverselookup(self):
 
