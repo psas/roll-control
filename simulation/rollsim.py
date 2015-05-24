@@ -26,7 +26,7 @@ altitude = altitude[begin:apogee]
 velocity = velocity[begin:apogee]
 
 # Set up PID
-pid = PIDController(p=10.0, i=0.0, d=0.0)
+pid = PIDController(p=10.0, i=0.01, d=0.1)
 pid.setTarget(0.0)
 
 # simulate roll
@@ -46,14 +46,14 @@ for i, t in enumerate(time):
     a = lv2.servo(a, t)
     aa = lv2.angular_accel(a, x, v, t)
 
-    if t > 7 and t < 7.1:
-        aa += 100
+    # step response:
+    #if t > 7 and t < 7.1:
+    #   aa += 100
 
-    #aa_offset = 10                          # ang acc offset in degs/s^2
-    #aa_rand = random.gauss(aa_offset, 20)   # random ang acc on the rocket
-
-    #aa += aa_rand                           # add random torque to rocket
-    #aa = 1.0
+    # random acceleration:
+    aa_offset = 80                          # ang acc offset in degs/s^2
+    aa_rand = random.gauss(aa_offset, 20)   # random ang acc on the rocket
+    aa += aa_rand                           # add random torque to rocket
 
     # next time step:
     r += aa/or_sample_rate
