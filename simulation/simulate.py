@@ -25,7 +25,7 @@ def simulate(time, altitude, velocity, timestep, PID, callback):
         aa = lv2.angular_accel(a, altitude[i], velocity[i], t)
 
         # adjust actual angular aceleration by caller
-        aa = callback(t, aa)
+        aa = callback(i, t, aa)
 
         roll_accel.append(aa)
         roll_angle.append(simps(roll_rate, time[:i+1]))
