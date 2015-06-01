@@ -1,6 +1,10 @@
 """Canard Aerodynamics
 """
 from math import sin, cos, radians, exp, degrees, sqrt, fabs
+import threading
+import struct
+import socket
+import time
 
 # Define PSAS wing:
 k_p = 2.45
@@ -17,6 +21,23 @@ burn_time = 5.6     # motor burn time in seconds
 # store last fin angle
 current_alpha = 0
 
+# TICKS to fin angle 
+PWM_TICKS_MAX = 56000
+PWM_TICKS_MIN =  0
+PWM_US_MAX = 3333
+PWM_US_MIN =  0
+
+MAX_SERVO_POSITION_US = 1900
+MIN_SERVO_POSITION_US = 1100
+
+MAX_SERVO_POSITION_TICKS = ( MAX_SERVO_POSITION_US * PWM_TICKS_MAX / PWM_US_MAX )
+MIN_SERVO_POSITION_TICKS = ( MIN_SERVO_POSITION_US * PWM_TICKS_MAX / PWM_US_MAX )
+
+MAX_CANARD_ANGLE = 15.0
+MIN_CANARD_ANGLE = -15.0
+
+PWM_TICKS_PER_DEGREE = (MAX_SERVO_POSITION_TICKS - MIN_SERVO_POSITION_TICKS) / (MAX_CANARD_ANGLE - MIN_CANARD_ANGLE)
+PWM_TICKS_CENTER = MIN_SERVO_POSITION_TICKS - PWM_TICKS_PER_DEGREE * MIN_CANARD_ANGLE
 
 def rho(alt):
     """Very basic exponential atmosphere model.
@@ -198,3 +219,54 @@ def servo(alpha, t):
         current_alpha = -15
 
     return current_alpha
+
+
+class Servo(threading.Thread):
+
+    def __init__(self, q):
+        from psas_packet import io, messages
+
+        threading.Thread.__init__(self)
+        self._stop = threading.Event()
+        self.daemon = True
+        self.queue = q
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('', 35003))
+        self.sock.settimeout(0.5)
+        self.net = io.Network(self.sock)
+
+        self.decode = messages
+
+    def run(self):
+        while (not self._stop.is_set()):
+            self.read()
+
+    def stop(self):
+        """Stop thread"""
+        self._stop.set()
+        self.join()
+        self.sock.close()
+
+    def read(self):
+        SEQN = self.decode.MESSAGES['SEQN']
+        st = struct.Struct("!HB")
+
+        try:
+            buff, addr = self.sock.recvfrom(1500)
+        except socket.timeout:
+            return
+
+        timestamp = time.time()
+
+        h = []
+        for c in buff:
+            h.append(str(hex(ord(c))))
+
+        seqno = SEQN.decode(buff[:SEQN.size])
+        buff = buff[SEQN.size:]
+        tics, en = st.unpack(buff)
+
+        tics = tics - PWM_TICKS_CENTER
+        degrees = tics / PWM_TICKS_PER_DEGREE
+        self.queue.put(degrees)
