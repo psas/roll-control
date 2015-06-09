@@ -29,9 +29,9 @@ altitude = altitude[begin:apogee]
 velocity = velocity[begin:apogee]
 
 # create a range of values
-prop_values = numpy.arange(0, 2, 1)
-integrate_values = numpy.arange(0, .002, .001)
-deriv_values = numpy.arange(0, .02, .01)
+prop_values = numpy.arange(0, 1, 1)
+integrate_values = numpy.arange(0, 1, 1)
+deriv_values = numpy.arange(0, 1, 1)
 
 # some arrays to store stuff in
 simulations = []
@@ -44,12 +44,18 @@ results = {}
 def randomness(i, t, aa):
     return aa + random.gauss(80,20)
         
-k=0  # counter variable
+k = 0  # counter variable
+
+total = len(prop_values)
+total *= len(integrate_values)
+total *= len(deriv_values)
+
+print 'About to perform %s simulation(s)...' % str(total)
 
 # a range of P, I, D values
-for p in prop_values:
-    for i in integrate_values:
-        for d in deriv_values:
+for p in range(len(prop_values)):
+    for i in range(len(integrate_values)):
+        for d in range(len(deriv_values)):
 
             # initialize dictionary
             results[k] = {
@@ -59,23 +65,35 @@ for p in prop_values:
             }
 
             # PID controller for roll angle
-            pid0 = PIDController(p, i, d)
+            pid0 = PIDController(prop_values[p], integrate_values[i], deriv_values[d])
 
             # PID controller for roll rate
-            pid1 = PIDController(10, 0, 0)
+            pid1 = PIDController(0, 0, 0)
 
             # store PID controllers for later reference
             results[k]['pid'] = pid0
             results[k]['pid2'] = pid1
 
             # simulate it
-            simulation = sim(time=time, altitude=altitude, velocity=velocity, timestep=None, PID=pid0, PID2=pid1, callback=randomness)
+            simulation = sim(time=time, altitude=altitude, velocity=velocity, timestep=None, PID=pid0, PID2=pid1, callback=randomness)[1]
 
             # save info
             simulations.append(simulation)
 
             # increment counter
             k += 1
+            
+            # show user how much longer
+            percentage_comp = k/total
+            percentage_comp *= 100
+            print 'Simulation %d completed. Overall completion %.2f%%' % (k, percentage_comp)
+
+print 'Beginning stability analysis....'
+print 'About to analyze %d simulations' % len(simulations)
+
+total = len(simulations)
+for i in range(len(simulations)):
+    total *= len(simulations[i])
 
 # now lets go through the simulations
 for i in range(len(simulations)):
@@ -84,12 +102,12 @@ for i in range(len(simulations)):
     stability = 0
 
     # store length of roll rate from simulation    
-    length = len(simulations[i][1])
+    length = len(simulations[i])
 
     for t in range(length):
 
         # extract roll rate for some time t
-        rr = simulations[i][1][t]
+        rr = simulations[i][t]
 
         # check to see if it falls in this range
         if rr > -.5 and rr < .5:
@@ -97,8 +115,19 @@ for i in range(len(simulations)):
             # it does so lets count that as being stable
             stability += 1
 
+        # keep track of analysis completion percentage
+        perc_comp = ((t+1)*(i+1))/total
+        perc_comp *= 100
+        
+        #only show the percent complete every so often
+        if (t % 2000) == 0:
+            print 'Overall analysis compeletion %.3f%%' % perc_comp
+
     # store the result in our dictionary
     results[i]['stability'] = stability/length
+
+    # keep track of analysis completion
+    print 'Analysis complete on simulation %d' % i
 
 # lets make a file to save some of this info
 filename = 'results.txt'
@@ -121,7 +150,7 @@ for j in results:
 
     # lets say 70% stability is an acceptable percentage
     # just for example...(its probably not in real life)
-    if results[j]['stability'] > .7:
+    if results[j]['stability'] > .8:
 
         # stability and PID values
         # converted to a string
@@ -133,7 +162,7 @@ for j in results:
         Ki2 = str(results[j]['pid2'].kI)
         Kd2 = str(results[j]['pid2'].kD)
         
-        
+        # write everything in a neat format to the file        
         f.write('Stability: %s\n' % stab)
         f.write('Roll Angle P:%s I:%s D:%s\n' % (Kp, Ki, Kd))
         f.write('Roll Rate P:%s I:%s D:%s\n' % (Kp2, Ki2, Kd2))
