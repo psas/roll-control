@@ -29,8 +29,8 @@ altitude = altitude[begin:apogee]
 velocity = velocity[begin:apogee]
 
 # create a range of values
-prop_values = numpy.arange(0, 1, 1)
-integrate_values = numpy.arange(0, 1, 1)
+prop_values = numpy.arange(0, 30.25, .25)
+integrate_values = numpy.arange(2, 15, 1)
 deriv_values = numpy.arange(0, 1, 1)
 
 # some arrays to store stuff in
@@ -50,7 +50,7 @@ total = len(prop_values)
 total *= len(integrate_values)
 total *= len(deriv_values)
 
-print 'About to perform %s simulation(s)...' % str(total)
+print 'About to perform %d simulation(s)...' % total
 
 # a range of P, I, D values
 for p in range(len(prop_values)):
@@ -88,12 +88,16 @@ for p in range(len(prop_values)):
             percentage_comp *= 100
             print 'Simulation %d completed. Overall completion %.2f%%' % (k, percentage_comp)
 
+
+# alright now lets look at which simulations were stable
 print 'Beginning stability analysis....'
 print 'About to analyze %d simulations' % len(simulations)
 
-total = len(simulations)
-for i in range(len(simulations)):
-    total *= len(simulations[i])
+# grab the total number of iterations we are about to do
+total = len(simulations)*len(simulations[0])
+
+# another counter variable
+l = 0
 
 # now lets go through the simulations
 for i in range(len(simulations)):
@@ -115,8 +119,12 @@ for i in range(len(simulations)):
             # it does so lets count that as being stable
             stability += 1
 
+        # update counter
+        l += 1
+        
         # keep track of analysis completion percentage
-        perc_comp = ((t+1)*(i+1))/total
+        #perc_comp = ((t+1)*(i+1))/total
+        perc_comp = l/total
         perc_comp *= 100
         
         #only show the percent complete every so often
@@ -128,6 +136,7 @@ for i in range(len(simulations)):
 
     # keep track of analysis completion
     print 'Analysis complete on simulation %d' % i
+
 
 # lets make a file to save some of this info
 filename = 'results.txt'
@@ -144,6 +153,9 @@ else:
     f = open(filename, "w")
     f.write('\n%s\n' % str(datetime.now()))
 
+# counter variable
+good_res = 0
+
 # now lets go through the results and find simulations with
 # some range of 'acceptable' stability
 for j in results:
@@ -151,6 +163,9 @@ for j in results:
     # lets say 70% stability is an acceptable percentage
     # just for example...(its probably not in real life)
     if results[j]['stability'] > .8:
+
+        # count good results
+        good_res += 1
 
         # stability and PID values
         # converted to a string
@@ -166,6 +181,9 @@ for j in results:
         f.write('Stability: %s\n' % stab)
         f.write('Roll Angle P:%s I:%s D:%s\n' % (Kp, Ki, Kd))
         f.write('Roll Rate P:%s I:%s D:%s\n' % (Kp2, Ki2, Kd2))
+
+# Completion message
+print '%d good results saved' % good_res
 
 # we are done now..close the file
 f.close()
