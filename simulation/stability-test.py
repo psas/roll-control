@@ -1,7 +1,7 @@
 """
     Prototype code for doing monte carlo testing
     on the stability of our nested PID loop
-    
+
     Programmed by William Harrington
     Portland State Aerospace Society
 """
@@ -15,9 +15,10 @@ import os.path  # for saving info to file
 from datetime import datetime  # for time stamping our file
 
 # Read in from open rocket
-columns = numpy.loadtxt('./openrocket/launch-12.csv', delimiter=',', unpack=True)
+columns = numpy.loadtxt('./openrocket/launch-12.csv',
+                        delimiter=',', unpack=True)
 
-time     = columns[0]
+time = columns[0]
 altitude = columns[1]*1000  # km to meters
 velocity = columns[4]
 
@@ -40,10 +41,12 @@ pid_values = []
 # dictionary for storing results of each sim
 results = {}
 
+
 # my dopey callback function
 def randomness(i, t, aa):
-    return aa + random.gauss(80,20)
-        
+    return aa + random.gauss(80, 20)
+
+
 k = 0  # counter variable
 
 total = len(prop_values)
@@ -65,7 +68,8 @@ for p in range(len(prop_values)):
             }
 
             # PID controller for roll angle
-            pid0 = PIDController(prop_values[p], integrate_values[i], deriv_values[d])
+            pid0 = PIDController(prop_values[p],
+                                 integrate_values[i], deriv_values[d])
 
             # PID controller for roll rate
             pid1 = PIDController(0, 0, 0)
@@ -75,18 +79,21 @@ for p in range(len(prop_values)):
             results[k]['pid2'] = pid1
 
             # simulate it
-            simulation = sim(time=time, altitude=altitude, velocity=velocity, timestep=None, PID=pid0, PID2=pid1, callback=randomness)[1]
+            simulation = sim(time=time, altitude=altitude, velocity=velocity,
+                             timestep=None, PID=pid0, PID2=pid1,
+                             callback=randomness)[1]
 
             # save info
             simulations.append(simulation)
 
             # increment counter
             k += 1
-            
+
             # show user how much longer
             percentage_comp = k/total
             percentage_comp *= 100
-            print 'Simulation %d completed. Overall completion %.2f%%' % (k, percentage_comp)
+            print 'Simulation %d completed. ' \
+                'Overall completion %.2f%%' % (k, percentage_comp)
 
 
 # alright now lets look at which simulations were stable
@@ -105,7 +112,7 @@ for i in range(len(simulations)):
     # set initial stability value
     stability = 0
 
-    # store length of roll rate from simulation    
+    # store length of roll rate from simulation
     length = len(simulations[i])
 
     for t in range(length):
@@ -121,13 +128,12 @@ for i in range(len(simulations)):
 
         # update counter
         l += 1
-        
+
         # keep track of analysis completion percentage
-        #perc_comp = ((t+1)*(i+1))/total
         perc_comp = l/total
         perc_comp *= 100
-        
-        #only show the percent complete every so often
+
+        # only show the percent complete every so often
         if (t % 2000) == 0:
             print 'Overall analysis compeletion %.3f%%' % perc_comp
 
@@ -147,7 +153,7 @@ if os.path.isfile(filename):
     # it does so lets open and append
     f = open(filename, "a")
     f.write('\n%s\n' % str(datetime.now()))
-    
+
 # doesn't exist so lets create it
 else:
     f = open(filename, "w")
@@ -176,8 +182,8 @@ for j in results:
         Kp2 = str(results[j]['pid2'].kP)
         Ki2 = str(results[j]['pid2'].kI)
         Kd2 = str(results[j]['pid2'].kD)
-        
-        # write everything in a neat format to the file        
+
+        # write everything in a neat format to the file
         f.write('Stability: %s\n' % stab)
         f.write('Roll Angle P:%s I:%s D:%s\n' % (Kp, Ki, Kd))
         f.write('Roll Rate P:%s I:%s D:%s\n' % (Kp2, Ki2, Kd2))
