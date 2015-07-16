@@ -9,6 +9,8 @@ class PIDController:
         self.target = 0
         self.lastError = 0
         self.integrator = 0
+        self.integrator_max = 500
+        self.integrator_min = -500
 
     def setTarget(self, newTarget):
         """Set the target (set point) for the PID to track
@@ -30,6 +32,12 @@ class PIDController:
         proportional = self.kP * error
         integral = self.kI * self.integrator
         derivative = self.kD * (error - self.lastError)
+
+        # clamp the integrator!
+        if integral > self.integrator_max:
+            integral = self.integrator_max
+        elif integral < self.integrator_min:
+            integral = self.integrator_min
 
         output = proportional + integral + derivative
 
