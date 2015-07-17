@@ -9,8 +9,8 @@ class PIDController:
         self.target = 0
         self.lastError = 0
         self.integrator = 0
-        self.integrator_max = 500
-        self.integrator_min = -500
+        self.integrator_max = 100
+        self.integrator_min = -100
 
     def setTarget(self, newTarget):
         """Set the target (set point) for the PID to track
